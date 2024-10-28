@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          Role      @default(USER)
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model Organization {
+  id        String    @id @default(cuid())
+  name      String
+  address   String
+  phone     String
+  email     String
+  website   String?
+  users     User[]
+  patients  Patient[]
+  referrals Referral[]
+  providers Provider[]
+  locations Location[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Patient {
+  id            String    @id @default(cuid())
+  fullName      String
+  dateOfBirth   DateTime
+  gender        String
+  ethnicity     String?
+  contactInfo   Json
+  insurance     Json
+  emergencyContact Json
+  medicalHistory Json
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  referrals    Referral[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([organizationId])
+}
+
+model Referral {
+  id            String    @id @default(cuid())
+  caseId        String    @unique
+  status        String
+  priority      String
+  details       Json
+  documents     Json
+  patientId     String
+  patient       Patient   @relation(fields: [patientId], references: [id])
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  completedAt   DateTime?
+
+  @@index([patientId])
+  @@index([organizationId])
+}
+
+model Provider {
+  id            String    @id @default(cuid())
+  name          String
+  specialty     String
+  locations     String[]
+  specialties   String[]
+  active        Boolean   @default(true)
+  contact       Json
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([organizationId])
+}
+
+model Location {
+  id            String    @id @default(cuid())
+  name          String
+  address       String
+  phone         String
+  medicalServices String[]
+  active        Boolean   @default(true)
+  organizationId String
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([organizationId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
